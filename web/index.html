@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Celestial Chess Solver</title>
+  <link rel="stylesheet" href="/src/styles.css" />
+</head>
+<body>
+  <main id="app">
+    <h1>Celestial Chess Solver</h1>
+    <div id="status" class="status"></div>
+    <div id="hint-panel" class="hint-panel" hidden></div>
+    <div class="layout">
+      <div class="play-column">
+        <div id="reserves-p1" class="reserves" data-player="1"></div>
+        <div id="board" class="board"></div>
+        <div id="reserves-p0" class="reserves" data-player="0"></div>
+        <div class="controls">
+          <button id="btn-reset" type="button">Reset</button>
+          <button id="btn-undo" type="button">Undo</button>
+          <button id="btn-hints" type="button">Hints: OFF</button>
+        </div>
+      </div>
+      <aside class="history-column">
+        <h2>Move History</h2>
+        <ol id="history" class="history"></ol>
+      </aside>
+    </div>
+    <div id="overlay" class="overlay" hidden>
+      <div class="overlay-card">
+        <p id="overlay-message">Working…</p>
+      </div>
+    </div>
+  </main>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

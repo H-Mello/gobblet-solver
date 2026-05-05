@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "../dist/web-types",
+    "noEmit": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["**/*.test.ts"]
+}
