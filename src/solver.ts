@@ -16,6 +16,7 @@ export interface SolverMemo {
   get(key: string): Outcome | undefined;
   set(key: string, value: Outcome): void;
   readonly size: number;
+  [Symbol.iterator](): IterableIterator<[string, Outcome]>;
 }
 
 class ShardedSolverMemo implements SolverMemo {
@@ -48,6 +49,12 @@ class ShardedSolverMemo implements SolverMemo {
     let n = 0;
     for (const m of this.#shards) n += m.size;
     return n;
+  }
+
+  *[Symbol.iterator](): IterableIterator<[string, Outcome]> {
+    for (const shard of this.#shards) {
+      yield* shard;
+    }
   }
 }
 

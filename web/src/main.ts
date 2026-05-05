@@ -63,10 +63,19 @@ async function handleHintsToggle(): Promise<void> {
   let restored = false;
   if (persistenceAvailable()) {
     try {
+      console.time("memo: read from IDB");
       const bytes = await loadMemoBytes();
+      console.timeEnd("memo: read from IDB");
       if (bytes) {
+        console.log(`memo: loaded ${bytes.length.toLocaleString()} bytes from IDB`);
+        console.time("memo: deserialize");
         const map = deserializeMemo(bytes);
-        for (const [k, v] of map) app.memo.set(k, v);
+        console.timeEnd("memo: deserialize");
+        // Replace the memo wholesale instead of copying entry-by-entry.
+        // 6.9M entries fit in one V8 Map (cap is ~16M), so we don't need
+        // sharding for this game's reachable state space.
+        app.memo = map;
+        console.log(`memo: ${app.memo.size.toLocaleString()} entries restored`);
         restored = true;
       }
     } catch (err) {
@@ -86,17 +95,26 @@ async function handleHintsToggle(): Promise<void> {
   await new Promise<void>((resolve) =>
     requestAnimationFrame(() => setTimeout(resolve, 0)),
   );
+  console.time("memo: solve from initial state");
   solve(currentState(app), app.memo);
+  console.timeEnd("memo: solve from initial state");
+  console.log(`memo: ${app.memo.size.toLocaleString()} entries computed`);
   setMemoStatus(app, "ready");
   rerender();
 
   // Persist async; don't block UI.
   if (persistenceAvailable()) {
     try {
+      console.time("memo: serialize");
       const bytes = serializeMemo(app.memo);
-      void saveMemoBytes(bytes);
+      console.timeEnd("memo: serialize");
+      console.log(`memo: serialized to ${bytes.length.toLocaleString()} bytes; writing to IDB…`);
+      void saveMemoBytes(bytes).then(
+        () => console.log("memo: write to IDB done"),
+        (err) => console.warn("memo: write to IDB failed:", err),
+      );
     } catch (err) {
-      console.warn("saveMemoBytes failed:", err);
+      console.warn("serializeMemo failed:", err);
     }
   }
 }

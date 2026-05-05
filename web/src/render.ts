@@ -76,11 +76,43 @@ function renderReserves(
     const count = reserveOf(state, player, size);
     const enabled = active && count > 0;
     const selected = enabled && app.selectedReserveSize === size;
-    const cls = selected ? "reserve-piece selected" : "reserve-piece";
+    const hintTint = enabled ? bestOutcomeForSize(app, state, player, size) : null;
+    const classes = ["reserve-piece"];
+    if (selected) classes.push("selected");
+    if (hintTint) classes.push(`tint-${hintTint}`);
     const disabled = enabled ? "" : "disabled";
-    html += `<button class="${cls}" data-size="${size}" data-player="${player}" type="button" ${disabled}>${pieceSVG(player, size, { dim: !active })}<span class="count">${count}</span></button>`;
+    html += `<button class="${classes.join(" ")}" data-size="${size}" data-player="${player}" type="button" ${disabled}>${pieceSVG(player, size, { dim: !active })}<span class="count">${count}</span></button>`;
   }
   container.innerHTML = html;
+}
+
+// Best outcome (from `player`'s perspective) achievable by placing a piece of
+// `size` somewhere legal on the board. Returns null if hints are off, the memo
+// isn't ready, or there is no legal placement for this size.
+function bestOutcomeForSize(
+  app: AppState,
+  state: GameState,
+  player: Player,
+  size: Size,
+): "win" | "draw" | "lose" | null {
+  if (!app.hintsEnabled || app.memoStatus !== "ready") return null;
+  let best: "win" | "draw" | "lose" | null = null;
+  for (let r = 0 as Coord; r < 3; r = (r + 1) as Coord) {
+    for (let c = 0 as Coord; c < 3; c = (c + 1) as Coord) {
+      if (!canPlace(state, player, size, r as Coord, c as Coord)) continue;
+      const child = applyMove(state, { size, row: r as Coord, col: c as Coord });
+      const oc = solve(child, app.memo);
+      const tint: "win" | "draw" | "lose" =
+        oc.winner === "draw" ? "draw" : oc.winner === player ? "win" : "lose";
+      if (best === null || tintRank(tint) > tintRank(best)) best = tint;
+      if (best === "win") return best;
+    }
+  }
+  return best;
+}
+
+function tintRank(t: "win" | "draw" | "lose"): number {
+  return t === "win" ? 2 : t === "draw" ? 1 : 0;
 }
 
 function renderBoard(app: AppState, state: GameState): void {

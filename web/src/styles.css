@@ -82,6 +82,9 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
   padding: 0;
 }
 .reserves .reserve-piece.selected { border-color: var(--selected-ring); }
+.reserves .reserve-piece.tint-win  { background: var(--tint-win); }
+.reserves .reserve-piece.tint-draw { background: var(--tint-draw); }
+.reserves .reserve-piece.tint-lose { background: var(--tint-lose); }
 .reserves .reserve-piece:disabled {
   opacity: 0.4;
   cursor: not-allowed;

@@ -65,10 +65,14 @@ export function deserializeMemo(bytes: Uint8Array): Map<string, Outcome> {
   const result = new Map<string, Outcome>();
   let offset = HEADER_BYTES;
   for (let i = 0; i < count; i++) {
-    let key = "";
-    for (let j = 0; j < KEY_BYTES; j++) {
-      key += String.fromCharCode(bytes[offset + j]!);
-    }
+    // One String.fromCharCode call per entry (16 args inline) is much faster
+    // than a 16-iteration `key += String.fromCharCode(...)` loop.
+    const key = String.fromCharCode(
+      bytes[offset]!, bytes[offset + 1]!, bytes[offset + 2]!, bytes[offset + 3]!,
+      bytes[offset + 4]!, bytes[offset + 5]!, bytes[offset + 6]!, bytes[offset + 7]!,
+      bytes[offset + 8]!, bytes[offset + 9]!, bytes[offset + 10]!, bytes[offset + 11]!,
+      bytes[offset + 12]!, bytes[offset + 13]!, bytes[offset + 14]!, bytes[offset + 15]!,
+    );
     result.set(key, byteToOutcome(bytes[offset + KEY_BYTES]!));
     offset += ENTRY_BYTES;
   }
