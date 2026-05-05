@@ -19,13 +19,11 @@ import { pieceSVG } from "./pieces.js";
 import { render } from "./render.js";
 import { deserializeMemoChunked } from "./serialize.js";
 
-// Empirical canonical-state count for the initial-state solve. This is what
-// solve() actually caches (it short-circuits on the first proven win, so it
-// never explores the full move tree at every node). bestPlay() — which we
-// only call later for hints — caches a strictly larger superset (~10.24M),
-// but the worker only invokes solve(), so this is the right denominator
-// for the progress bar.
-const EXPECTED_SOLVE_STATES = 8_367_794;
+// Empirical canonical-state count for the initial-state solve. The worker
+// runs bestPlay() (not solve()) so the cache is fully populated for every
+// reachable position — that's what makes hint renders later feel instant.
+// 10,242,158 is the exact number; verified via scripts/solve-initial.ts.
+const EXPECTED_SOLVE_STATES = 10_242_158;
 
 const app: AppState = createAppState();
 

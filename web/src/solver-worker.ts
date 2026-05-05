@@ -4,7 +4,7 @@ import {
   type GameState,
   type Outcome,
   type SolverMemo,
-  solve,
+  bestPlay,
 } from "../../src/index.js";
 import { serializeMemo } from "./serialize.js";
 
@@ -49,7 +49,12 @@ interface SolveRequest {
 self.onmessage = (e: MessageEvent<SolveRequest>) => {
   if (e.data.type !== "solve") return;
   const memo = new ReportingMemo(e.data.reportEvery ?? 50_000);
-  solve(e.data.state, memo);
+  // bestPlay() instead of solve() so the memo is fully populated for the
+  // entire reachable game tree (~10.24M states), not just the subset solve()
+  // needs to prove the result (~8.37M). This costs ~3s extra at solve time
+  // but means every later HintCache build is a pure memo lookup — no
+  // on-demand exploration during hint render. Worth it for the UX.
+  bestPlay(e.data.state, memo);
   // Final progress tick so the UI snaps to its true last value.
   (self as unknown as Worker).postMessage({ type: "progress", size: memo.size });
   const bytes = serializeMemo(memo);
