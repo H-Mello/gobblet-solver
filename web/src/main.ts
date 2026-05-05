@@ -44,6 +44,16 @@ function scheduleRender(): void {
   });
 }
 
+// After the chunked deserialize hits 100%, hold the bar visibly at full so
+// the user actually sees completion before we transition the overlay away.
+// Without this, the rAF-batched final progress render and the synchronous
+// transition-to-ready render can fire in the same frame, and the bar visibly
+// stops short.
+async function holdProgressAtFull(): Promise<void> {
+  rerender(); // forces the latest 100% state to paint synchronously
+  await new Promise<void>((resolve) => setTimeout(resolve, 300));
+}
+
 // ---------- click handlers (kept; drag layered on top) ----------
 
 function handleCellClick(target: HTMLElement): void {
@@ -200,6 +210,7 @@ async function handleHintsToggle(): Promise<void> {
           scheduleRender();
         });
         console.timeEnd("memo: deserialize");
+        await holdProgressAtFull();
         app.memo = map;
         console.log(`memo: ${app.memo.size.toLocaleString()} entries restored`);
         restored = true;
@@ -257,7 +268,8 @@ function runWorkerSolve(): Promise<void> {
           setOverlayProgress(app, { current, total });
           scheduleRender();
         }).then(
-          (map) => {
+          async (map) => {
+            await holdProgressAtFull();
             app.memo = map;
             setMemoStatus(app, "ready");
             setOverlayProgress(app, null);
