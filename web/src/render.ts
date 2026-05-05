@@ -145,9 +145,19 @@ function renderBoard(app: AppState, state: GameState): void {
       const classes = ["cell"];
       if (hint) classes.push(`tint-${hint.tint}`);
       if (isBest) classes.push("best");
-      const statsHtml = hint?.counts
-        ? `<div class="cell-stats"><span class="cs-w">${hint.counts.wins}</span>·<span class="cs-d">${hint.counts.draws}</span>·<span class="cs-l">${hint.counts.losses}</span></div>`
-        : "";
+      let statsHtml = "";
+      if (hint) {
+        if (hint.counts) {
+          statsHtml = `<div class="cell-stats"><span class="cs-w">${hint.counts.wins}</span>·<span class="cs-d">${hint.counts.draws}</span>·<span class="cs-l">${hint.counts.losses}</span></div>`;
+        } else {
+          // Terminal placement (immediate win or forced-stuck draw — no
+          // opponent responses to count). Show the outcome name in place of
+          // the W·D·L tally so the corner isn't blank.
+          const label = hint.tint === "win" ? "Win" : hint.tint === "draw" ? "Draw" : "Loss";
+          const colorClass = hint.tint === "win" ? "cs-w" : hint.tint === "draw" ? "cs-d" : "cs-l";
+          statsHtml = `<div class="cell-stats"><span class="${colorClass}">${label}</span></div>`;
+        }
+      }
       html += `<div class="${classes.join(" ")}" data-row="${r}" data-col="${c}">${inner}${statsHtml}</div>`;
     }
   }
