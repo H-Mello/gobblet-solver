@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Outcome } from "../../src/index.js";
 import { deserializeMemo, serializeMemo, MEMO_MAGIC, MEMO_VERSION } from "./serialize.js";
 
-function makeMemo(entries: Array<[string, Outcome]>): Map<string, Outcome> {
+function makeMemo(entries: Array<[number, Outcome]>): Map<number, Outcome> {
   return new Map(entries);
 }
 
@@ -15,14 +15,16 @@ describe("serialize / deserialize memo", () => {
   });
 
   it("round-trips a small memo", () => {
-    const key1 = String.fromCharCode(...new Array(16).fill(0));
-    const key2 = String.fromCharCode(...new Array(16).fill(0).map((_, i) => i));
+    // Use a large key (>2^32) and a small one to exercise both halves of the
+    // 5-byte uint40 encoding.
+    const key1 = 0;
+    const key2 = 0xFE_DCBA_9876; // ~1.09 trillion, fits in 40 bits
     const memo = makeMemo([
       [key1, { winner: "draw" }],
       [key2, { winner: 0 }],
     ]);
     const bytes = serializeMemo(memo);
-    expect(bytes.length).toBe(9 + 2 * 17);
+    expect(bytes.length).toBe(9 + 2 * 6);
     const restored = deserializeMemo(bytes);
     expect(restored.size).toBe(2);
     expect(restored.get(key1)).toEqual({ winner: "draw" });

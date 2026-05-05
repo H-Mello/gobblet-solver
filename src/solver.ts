@@ -16,54 +16,18 @@ function outcomeForWinner(w: Player): Outcome {
   return w === 0 ? OUTCOME_P0_WIN : OUTCOME_P1_WIN;
 }
 
+// Numeric keys (40 bits) packed by canonicalKey() in symmetry.ts. The full
+// reachable state space under D4 is ~10M, comfortably under V8's per-Map
+// 16M-entry cap, so a single Map suffices and we don't need sharding.
 export interface SolverMemo {
-  get(key: string): Outcome | undefined;
-  set(key: string, value: Outcome): void;
+  get(key: number): Outcome | undefined;
+  set(key: number, value: Outcome): void;
   readonly size: number;
-  [Symbol.iterator](): IterableIterator<[string, Outcome]>;
+  [Symbol.iterator](): IterableIterator<[number, Outcome]>;
 }
 
-class ShardedSolverMemo implements SolverMemo {
-  readonly #shards: Map<string, Outcome>[];
-  readonly #count: number;
-
-  constructor(count = 16) {
-    this.#count = count;
-    this.#shards = Array.from({ length: count }, () => new Map());
-  }
-
-  #shardFor(key: string): Map<string, Outcome> {
-    // djb2-ish over the board bytes (skip turn byte to spread uniformly).
-    let h = 5381;
-    for (let i = 0; i < 9; i++) {
-      h = ((h << 5) + h + key.charCodeAt(i)) | 0;
-    }
-    return this.#shards[(h >>> 0) % this.#count]!;
-  }
-
-  get(key: string): Outcome | undefined {
-    return this.#shardFor(key).get(key);
-  }
-
-  set(key: string, value: Outcome): void {
-    this.#shardFor(key).set(key, value);
-  }
-
-  get size(): number {
-    let n = 0;
-    for (const m of this.#shards) n += m.size;
-    return n;
-  }
-
-  *[Symbol.iterator](): IterableIterator<[string, Outcome]> {
-    for (const shard of this.#shards) {
-      yield* shard;
-    }
-  }
-}
-
-export function createMemo(shards = 16): SolverMemo {
-  return new ShardedSolverMemo(shards);
+export function createMemo(): SolverMemo {
+  return new Map<number, Outcome>();
 }
 
 export interface MoveStats {

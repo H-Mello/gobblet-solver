@@ -13,16 +13,16 @@ import { serializeMemo } from "./serialize.js";
 // solve runs, so they reach the main thread continuously rather than only at
 // the end.
 class ReportingMemo implements SolverMemo {
-  readonly #inner = new Map<string, Outcome>();
+  readonly #inner = new Map<number, Outcome>();
   #lastReported = 0;
 
   constructor(private readonly reportEvery: number) {}
 
-  get(key: string): Outcome | undefined {
+  get(key: number): Outcome | undefined {
     return this.#inner.get(key);
   }
 
-  set(key: string, value: Outcome): void {
+  set(key: number, value: Outcome): void {
     this.#inner.set(key, value);
     const size = this.#inner.size;
     if (size - this.#lastReported >= this.reportEvery) {
@@ -35,7 +35,7 @@ class ReportingMemo implements SolverMemo {
     return this.#inner.size;
   }
 
-  *[Symbol.iterator](): IterableIterator<[string, Outcome]> {
+  *[Symbol.iterator](): IterableIterator<[number, Outcome]> {
     yield* this.#inner;
   }
 }

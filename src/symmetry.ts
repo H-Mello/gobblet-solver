@@ -15,27 +15,35 @@ const TRANSFORMS: ReadonlyArray<ReadonlyArray<number>> = [
 
 const T_COUNT = TRANSFORMS.length;
 
-// Canonical cache key: lex-smallest D4 transform of the board portion,
-// concatenated with the (transform-invariant) reserve and turn bytes.
-export function canonicalKey(state: GameState): string {
+// Canonical cache key, packed into a 40-bit integer (fits in a JS Number; the
+// safe-integer cap is 2^53 - 1).
+//
+//   bits 13..39  (27 bits) : lex-smallest D4-transformed board, base-8 encoded
+//   bits  1..12  (12 bits) : reserves [P0-S, P0-M, P0-L, P1-S, P1-M, P1-L]
+//                            packed 2 bits each (each reserve is 0..3)
+//   bit  0       ( 1 bit ) : side to move (0 = P0, 1 = P1)
+//
+// Numeric keys are noticeably faster for Map<number, Outcome> than 16-char
+// string keys: no allocation per lookup, no per-byte string comparison, and
+// no String.fromCharCode call. Comparing two encodings of the board to find
+// the lex-min transform is also just `<` between two numbers.
+export function canonicalKey(state: GameState): number {
   const data = state.data;
-  let bestIdx = 0;
-  outer: for (let t = 1; t < T_COUNT; t++) {
-    const cur = TRANSFORMS[t]!;
-    const best = TRANSFORMS[bestIdx]!;
+  let minBoard = Number.MAX_SAFE_INTEGER;
+  for (let t = 0; t < T_COUNT; t++) {
+    const perm = TRANSFORMS[t]!;
+    let v = 0;
     for (let i = 0; i < 9; i++) {
-      const a = data[cur[i]!]!;
-      const b = data[best[i]!]!;
-      if (a < b) {
-        bestIdx = t;
-        continue outer;
-      }
-      if (a > b) continue outer;
+      v = (v << 3) | data[perm[i]!]!;
     }
+    if (v < minBoard) minBoard = v;
   }
-  const perm = TRANSFORMS[bestIdx]!;
-  const out = new Array<number>(16);
-  for (let i = 0; i < 9; i++) out[i] = data[perm[i]!]!;
-  for (let i = 9; i < 16; i++) out[i] = data[i]!;
-  return String.fromCharCode(...out);
+  // Pack reserves: 6 values * 2 bits.
+  let reserves = 0;
+  for (let i = 9; i < 15; i++) {
+    reserves = (reserves << 2) | data[i]!;
+  }
+  // Combine: minBoard (27) << 13 | reserves (12) << 1 | turn (1).
+  // The 27-bit shift exceeds JS << (32-bit signed), so use multiplication.
+  return minBoard * 8192 + reserves * 2 + data[15]!;
 }
