@@ -74,11 +74,11 @@ function renderReserves(
   let html = "";
   for (const size of sizes) {
     const count = reserveOf(state, player, size);
-    for (let i = 0; i < count; i++) {
-      const selected = active && app.selectedReserveSize === size && i === count - 1;
-      const cls = selected ? "reserve-piece selected" : "reserve-piece";
-      html += `<button class="${cls}" data-size="${size}" data-player="${player}" type="button">${pieceSVG(player, size, { dim: !active })}</button>`;
-    }
+    const enabled = active && count > 0;
+    const selected = enabled && app.selectedReserveSize === size;
+    const cls = selected ? "reserve-piece selected" : "reserve-piece";
+    const disabled = enabled ? "" : "disabled";
+    html += `<button class="${cls}" data-size="${size}" data-player="${player}" type="button" ${disabled}>${pieceSVG(player, size, { dim: !active })}<span class="count">${count}</span></button>`;
   }
   container.innerHTML = html;
 }

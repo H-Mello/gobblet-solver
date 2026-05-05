@@ -57,7 +57,8 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
 
 .reserves[data-active="false"] .reserve-piece { pointer-events: none; }
 .reserves .reserve-piece {
-  width: 44px; height: 44px;
+  position: relative;
+  width: 60px; height: 60px;
   cursor: pointer;
   border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
@@ -66,6 +67,26 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
   padding: 0;
 }
 .reserves .reserve-piece.selected { border-color: var(--selected-ring); }
+.reserves .reserve-piece:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.reserves .reserve-piece .count {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: #fff;
+  color: #333;
+  border: 1px solid #888;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
 
 .board {
   display: grid;
@@ -118,13 +139,25 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
   display: flex; align-items: center; justify-content: center;
   z-index: 100;
 }
+.overlay[hidden] { display: none; }
 .overlay-card {
   background: #fff;
   padding: 1.5rem 2rem;
   border-radius: 8px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.3);
   font-size: 1.1rem;
+  text-align: center;
 }
+.overlay-spinner {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 0.75rem;
+  border: 3px solid #e0e0e0;
+  border-top-color: var(--p0);
+  border-radius: 50%;
+  animation: ccs-spin 0.8s linear infinite;
+}
+@keyframes ccs-spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 720px) {
   .layout { grid-template-columns: 1fr; }
