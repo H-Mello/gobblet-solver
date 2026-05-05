@@ -2,7 +2,17 @@
 
 ## Context
 
-We have a working solver library in `src/` that fully solves the modified-tic-tac-toe variant in TypeScript: `bestPlay(state)` returns the optimal outcome, optimal moves, and per-move W/L/D tally; `solve()` populates a memo of canonical states; the initial position is decided in ~8 seconds and ~6.9M canonical states. There is no user-facing way to interact with it.
+We have a working solver library in `src/` that fully solves the modified-tic-tac-toe variant in TypeScript: `bestPlay(state)` returns the optimal outcome, optimal moves, and per-move W/L/D tally; `solve()` populates a memo of canonical states; the initial position is decided in ~15 seconds across ~10M canonical states. There is no user-facing way to interact with it.
+
+## Game rules (current)
+
+- 3×3 grid. Two players (P0, P1). P0 moves first.
+- Each player starts with 8 pieces: 3 small, 3 medium, 2 large.
+- A turn places one piece on the board. Placements are final — pieces never move once placed.
+- Cover rule: a piece may be placed on a non-empty cell **iff its size is strictly larger** than the existing top piece. The covered piece's owner doesn't matter — own pieces and opponent pieces are both coverable.
+- Same-size and smaller pieces cannot cover.
+- Win: three squares in a line (row / column / diagonal) whose top pieces all belong to you.
+- A player with no legal placement skips. Both players stuck consecutively → draw.
 
 The goal is a small, static web app that lets a person play out positions on a 3×3 board, with optional solver-driven hints showing the outcome under perfect play and color-coded legality of every legal move. The app must be deployable as a static page (no server) and should not pay the full 8-second solve cost more than once per browser profile.
 
@@ -133,7 +143,7 @@ A flat byte stream of fixed-size records.
      1 byte  outcome        (0 = P0 wins, 1 = P1 wins, 2 = draw) ]
 ```
 
-For 6.9M entries the blob is ~117 MB. Acceptable for desktop; borderline on mobile. Bit-packing the key to 5 bytes would cut this to ~41 MB but is deferred for v1.
+For ~10M entries the blob is ~170 MB. Acceptable for desktop; borderline on mobile. Bit-packing the key to 5 bytes would cut this to ~60 MB but is deferred for v1.
 
 ### Load / solve flow on first hint toggle
 
@@ -170,7 +180,7 @@ End-to-end the app must:
 4. **Win detection**: place three P0 pieces in a row → status bar reads "P0 wins!", further placement is disallowed.
 5. **Reset**: clears the board but does **not** clear the memo (verified by toggling hints again — should not re-trigger an 8s solve).
 6. **Undo / jump**: history list is clickable; selecting a past row redraws that position; placing then truncates the future.
-7. **Hints toggle (cold)**: first toggle on a fresh profile shows the "Solving…" overlay for ~8s, then the hint panel appears with `outcome: P0 wins` and `9 / 18 / 0` for the empty board.
+7. **Hints toggle (cold)**: first toggle on a fresh profile shows the "Solving…" overlay for ~15s, then the hint panel appears with `outcome: P0 wins` and `9 / 18 / 0` for the empty board.
 8. **Hints toggle (warm)**: reload the page, toggle hints — overlay flashes briefly while IDB loads, then ready. No 8s solve.
 9. **Cell tinting** (initial state, hints on, P0 medium picked up): the eight non-center cells tint green (winning), and the center tints red (losing). Picking up a P0 large instead: only the center is green, the eight others are red. Picking up a P0 small: all nine cells are red.
 10. **Build**: `npm run build:web` emits a working static bundle in `dist/web/` — open `index.html` directly via `python -m http.server` and run through tasks 1–9.

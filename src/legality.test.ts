@@ -28,25 +28,33 @@ describe("canPlace", () => {
     expect(canPlace(s, 0, 3, 0, 0)).toBe(true);
   });
 
-  it("rejects covering own piece, regardless of size", () => {
+  it("allows covering own strictly smaller piece", () => {
     const s = initialState();
     setCell(s, 0, 0, encodePiece(0, 1));
-    expect(canPlace(s, 0, 2, 0, 0)).toBe(false);
-    expect(canPlace(s, 0, 3, 0, 0)).toBe(false);
+    expect(canPlace(s, 0, 2, 0, 0)).toBe(true);
+    expect(canPlace(s, 0, 3, 0, 0)).toBe(true);
   });
 
-  it("rejects same-size opponent cover", () => {
-    const s = initialState();
-    setCell(s, 0, 0, encodePiece(1, 2));
-    expect(canPlace(s, 0, 2, 0, 0)).toBe(false);
+  it("rejects covering same-size piece (own or opponent)", () => {
+    const sOpp = initialState();
+    setCell(sOpp, 0, 0, encodePiece(1, 2));
+    expect(canPlace(sOpp, 0, 2, 0, 0)).toBe(false);
+
+    const sOwn = initialState();
+    setCell(sOwn, 0, 0, encodePiece(0, 2));
+    expect(canPlace(sOwn, 0, 2, 0, 0)).toBe(false);
   });
 
-  it("rejects covering opponent's larger or equal piece", () => {
-    const s = initialState();
-    setCell(s, 0, 0, encodePiece(1, 3));
-    expect(canPlace(s, 0, 1, 0, 0)).toBe(false);
-    expect(canPlace(s, 0, 2, 0, 0)).toBe(false);
-    expect(canPlace(s, 0, 3, 0, 0)).toBe(false);
+  it("rejects covering a larger piece (own or opponent)", () => {
+    const sOpp = initialState();
+    setCell(sOpp, 0, 0, encodePiece(1, 3));
+    expect(canPlace(sOpp, 0, 1, 0, 0)).toBe(false);
+    expect(canPlace(sOpp, 0, 2, 0, 0)).toBe(false);
+
+    const sOwn = initialState();
+    setCell(sOwn, 0, 0, encodePiece(0, 3));
+    expect(canPlace(sOwn, 0, 1, 0, 0)).toBe(false);
+    expect(canPlace(sOwn, 0, 2, 0, 0)).toBe(false);
   });
 });
 

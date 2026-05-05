@@ -23,11 +23,10 @@ export function canPlace(
   const top = cellAt(state, r, c);
   if (top === 0) return true;
 
-  const topOwner = ownerOf(top);
   const topSize = sizeOf(top);
-  if (topOwner === null || topSize === null) return false;
+  if (topSize === null) return false;
 
-  if (topOwner === player) return false;
+  // A piece covers any strictly smaller top piece, regardless of owner.
   return size > topSize;
 }
 

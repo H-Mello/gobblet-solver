@@ -58,25 +58,23 @@ describe("placeAt", () => {
     expect(app.history.length).toBe(1);
   });
 
-  it("does nothing if the move is illegal (own-piece cover)", () => {
+  it("does nothing if the move is illegal (same-size cover)", () => {
     const app = createAppState();
     // P0 places small at (0,0).
     selectReserve(app, 1);
     placeAt(app, 0, 0);
-    // P1 places small at (1,1) — out of the way.
+    // P1's turn. Try to cover P0's small with another small — same size is illegal.
     selectReserve(app, 1);
-    placeAt(app, 1, 1);
-    // P0's turn again. Select medium and try to cover own small at (0,0).
-    selectReserve(app, 2);
     const lengthBefore = app.history.length;
     placeAt(app, 0, 0);
     expect(app.history.length).toBe(lengthBefore);
-    expect(app.selectedReserveSize).toBe(2); // selection survives a no-op
+    expect(app.selectedReserveSize).toBe(1); // selection survives a no-op
   });
 
-  it("rejects every same-player cover combination", () => {
-    // For each (placed size, covering size) where covering > placed, verify the
-    // own-piece cover is rejected and the cell is unchanged.
+  it("allows every strictly-larger same-player cover combination", () => {
+    // (placed, covering) pairs where covering > placed. Under the rule "strictly
+    // larger covers anything strictly smaller, regardless of owner", these
+    // should all succeed.
     const cases: Array<[1 | 2, 2 | 3]> = [
       [1, 2],
       [1, 3],
@@ -87,11 +85,8 @@ describe("placeAt", () => {
       selectReserve(app, placed); placeAt(app, 0, 0); // P0 places at (0,0)
       selectReserve(app, 1); placeAt(app, 1, 1);      // P1 plays elsewhere
       selectReserve(app, attempt);                     // P0 picks bigger size
-      const before = cellAt(currentState(app), 0, 0);
       placeAt(app, 0, 0);
-      const after = cellAt(currentState(app), 0, 0);
-      expect(after).toBe(before); // should be unchanged
-      expect(after).toBe(encodePiece(0, placed));
+      expect(cellAt(currentState(app), 0, 0)).toBe(encodePiece(0, attempt));
     }
   });
 

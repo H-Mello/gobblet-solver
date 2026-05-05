@@ -25,14 +25,17 @@ describe("legalMoves", () => {
     expect(moves.every((m) => m.size !== 3)).toBe(true);
   });
 
-  it("forbids any cover of the current player's own piece", () => {
+  it("allows strictly larger covers over an own piece", () => {
     const s = initialState();
     setCell(s, 1, 1, encodePiece(0, 1));
-    const moves = legalMoves(s);
-    expect(moves.some((m) => m.row === 1 && m.col === 1)).toBe(false);
+    const here = legalMoves(s).filter((m) => m.row === 1 && m.col === 1);
+    // small on own small: rejected (same size)
+    // medium on own small: legal
+    // large on own small: legal
+    expect(here.map((m) => m.size).sort()).toEqual([2, 3]);
   });
 
-  it("allows strictly larger covers over the opponent's piece", () => {
+  it("allows strictly larger covers over an opponent piece", () => {
     const s = initialState();
     setCell(s, 0, 0, encodePiece(1, 1));
     const center = (m: Move) => m.row === 0 && m.col === 0;
@@ -88,16 +91,22 @@ describe("applyMove", () => {
     expect(turn(s2)).toBe(0);
   });
 
-  it("throws on covering own piece", () => {
+  it("succeeds when covering own piece with a strictly larger size", () => {
     const s = initialState();
     setCell(s, 0, 0, encodePiece(0, 1));
-    expect(() => applyMove(s, { size: 2, row: 0, col: 0 })).toThrow(/illegal/);
+    const next = applyMove(s, { size: 2, row: 0, col: 0 });
+    expect(cellAt(next, 0, 0)).toBe(encodePiece(0, 2));
+    expect(reserveOf(next, 0, 2)).toBe(2);
   });
 
-  it("throws on same-size opponent cover", () => {
-    const s = initialState();
-    setCell(s, 0, 0, encodePiece(1, 2));
-    expect(() => applyMove(s, { size: 2, row: 0, col: 0 })).toThrow(/illegal/);
+  it("throws on same-size cover (own or opponent)", () => {
+    const sOpp = initialState();
+    setCell(sOpp, 0, 0, encodePiece(1, 2));
+    expect(() => applyMove(sOpp, { size: 2, row: 0, col: 0 })).toThrow(/illegal/);
+
+    const sOwn = initialState();
+    setCell(sOwn, 0, 0, encodePiece(0, 2));
+    expect(() => applyMove(sOwn, { size: 2, row: 0, col: 0 })).toThrow(/illegal/);
   });
 
   it("throws when reserve is empty", () => {

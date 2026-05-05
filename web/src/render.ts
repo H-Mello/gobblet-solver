@@ -247,7 +247,7 @@ function renderOverlay(app: AppState): void {
     msg.textContent = "Loading saved analysis…";
   } else if (app.hintsEnabled && app.memoStatus === "computing") {
     el.hidden = false;
-    msg.textContent = "Solving (≈8s)…";
+    msg.textContent = "Solving (≈15s)…";
   } else {
     el.hidden = true;
   }
