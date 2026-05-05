@@ -74,6 +74,27 @@ describe("placeAt", () => {
     expect(app.selectedReserveSize).toBe(2); // selection survives a no-op
   });
 
+  it("rejects every same-player cover combination", () => {
+    // For each (placed size, covering size) where covering > placed, verify the
+    // own-piece cover is rejected and the cell is unchanged.
+    const cases: Array<[1 | 2, 2 | 3]> = [
+      [1, 2],
+      [1, 3],
+      [2, 3],
+    ];
+    for (const [placed, attempt] of cases) {
+      const app = createAppState();
+      selectReserve(app, placed); placeAt(app, 0, 0); // P0 places at (0,0)
+      selectReserve(app, 1); placeAt(app, 1, 1);      // P1 plays elsewhere
+      selectReserve(app, attempt);                     // P0 picks bigger size
+      const before = cellAt(currentState(app), 0, 0);
+      placeAt(app, 0, 0);
+      const after = cellAt(currentState(app), 0, 0);
+      expect(after).toBe(before); // should be unchanged
+      expect(after).toBe(encodePiece(0, placed));
+    }
+  });
+
   it("truncates future history when a move is made after a jump-back", () => {
     const app = createAppState();
     selectReserve(app, 1); placeAt(app, 0, 0); // move 1

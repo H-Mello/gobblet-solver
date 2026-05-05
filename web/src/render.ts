@@ -120,20 +120,50 @@ function renderBoard(app: AppState, state: GameState): void {
   const board = document.getElementById("board")!;
   const player = currentPlayer(app);
   const ongoing = gameStatus(state).kind === "ongoing";
+
+  // Pass 1: compute every cell's hint so we know which one(s) score best.
+  const hints: Array<CellHint | null> = [];
+  for (let r = 0 as Coord; r < 3; r = (r + 1) as Coord) {
+    for (let c = 0 as Coord; c < 3; c = (c + 1) as Coord) {
+      hints.push(computeCellHint(app, state, player, r as Coord, c as Coord, ongoing));
+    }
+  }
+  let topScore = -Infinity;
+  for (const h of hints) {
+    if (!h) continue;
+    const s = scoreHint(h);
+    if (s > topScore) topScore = s;
+  }
+
+  // Pass 2: render, marking cells whose score equals topScore.
   let html = "";
+  let idx = 0;
   for (let r = 0 as Coord; r < 3; r = (r + 1) as Coord) {
     for (let c = 0 as Coord; c < 3; c = (c + 1) as Coord) {
       const v = cellAt(state, r as Coord, c as Coord);
       const inner = v === 0 ? "" : pieceSVGFromCell(v);
-      const hint = computeCellHint(app, state, player, r as Coord, c as Coord, ongoing);
-      const cls = hint ? `cell tint-${hint.tint}` : "cell";
+      const hint = hints[idx++]!;
+      const isBest = hint !== null && topScore !== -Infinity && scoreHint(hint) === topScore;
+      const classes = ["cell"];
+      if (hint) classes.push(`tint-${hint.tint}`);
+      if (isBest) classes.push("best");
       const statsHtml = hint?.counts
         ? `<div class="cell-stats"><span class="cs-w">${hint.counts.wins}</span>·<span class="cs-d">${hint.counts.draws}</span>·<span class="cs-l">${hint.counts.losses}</span></div>`
         : "";
-      html += `<div class="${cls}" data-row="${r}" data-col="${c}">${inner}${statsHtml}</div>`;
+      html += `<div class="${classes.join(" ")}" data-row="${r}" data-col="${c}">${inner}${statsHtml}</div>`;
     }
   }
   board.innerHTML = html;
+}
+
+// Higher is better. Tint dominates: win > draw > lose. Within the same tint,
+// more wins beats fewer wins, then fewer losses beats more losses. Terminal
+// placements (no opponent responses) get the top of their tint class because
+// the result is forced.
+function scoreHint(h: CellHint): number {
+  const tintBase = h.tint === "win" ? 1_000_000 : h.tint === "draw" ? 1_000 : 0;
+  if (!h.counts) return tintBase + 999_999; // terminal — locks the result in
+  return tintBase + h.counts.wins * 100 - h.counts.losses;
 }
 
 function pieceSVGFromCell(v: number): string {
