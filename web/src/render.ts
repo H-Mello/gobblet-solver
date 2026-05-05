@@ -237,15 +237,31 @@ function describeMoveAt(app: AppState, i: number): string {
   return "(?)";
 }
 
+// Empirically the canonical-state count under the current rules. We use it as
+// the denominator for the progress bar; the actual count varies by a small
+// amount but it's stable enough to drive a useful indicator.
+const EXPECTED_SOLVE_STATES = 10_242_158;
+
 function renderOverlay(app: AppState): void {
   const el = document.getElementById("overlay")!;
   const msg = document.getElementById("overlay-message")!;
+  const progressTrack = document.getElementById("overlay-progress-track")!;
+  const progressFill = document.getElementById("overlay-progress-fill")!;
+  const progressText = document.getElementById("overlay-progress-text")!;
   if (app.hintsEnabled && app.memoStatus === "loading") {
     el.hidden = false;
     msg.textContent = "Loading saved analysis…";
+    progressTrack.hidden = true;
+    progressText.hidden = true;
   } else if (app.hintsEnabled && app.memoStatus === "computing") {
     el.hidden = false;
-    msg.textContent = "Solving (≈15s)…";
+    msg.textContent = "Solving…";
+    progressTrack.hidden = false;
+    progressText.hidden = false;
+    const size = app.solveProgressSize;
+    const pct = Math.min(99, Math.floor((size / EXPECTED_SOLVE_STATES) * 100));
+    progressFill.style.width = `${pct}%`;
+    progressText.textContent = `${size.toLocaleString()} / ~${EXPECTED_SOLVE_STATES.toLocaleString()} states (${pct}%)`;
   } else {
     el.hidden = true;
   }

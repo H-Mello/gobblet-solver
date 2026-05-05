@@ -57,6 +57,12 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
 
 .reserves[data-active="false"] .reserve-piece { pointer-events: none; }
 
+/* Disable native touch behaviors on reserve buttons so finger drags don't
+   accidentally pan/zoom the page. */
+.reserves .reserve-piece {
+  touch-action: none;
+}
+
 .reserve-label {
   display: inline-flex;
   align-items: center;
@@ -197,6 +203,41 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
   animation: ccs-spin 0.8s linear infinite;
 }
 @keyframes ccs-spin { to { transform: rotate(360deg); } }
+
+.progress-track {
+  width: 240px;
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0.5rem auto 0.25rem;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--p0);
+  width: 0%;
+  transition: width 120ms linear;
+}
+.progress-text {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #444;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Drag ghost: a translucent piece icon that follows the pointer/finger while
+   dragging a reserve piece onto the board. */
+.drag-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 1000;
+  width: 60px;
+  height: 60px;
+  transform: translate(-50%, -50%);
+  opacity: 0.85;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+.drag-ghost svg.piece { width: 100%; height: 100%; }
 
 @media (max-width: 720px) {
   .layout { grid-template-columns: 1fr; }

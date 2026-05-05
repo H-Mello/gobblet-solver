@@ -20,6 +20,9 @@ export interface AppState {
   hintsEnabled: boolean;
   memo: SolverMemo;
   memoStatus: MemoStatus;
+  // Number of memo entries reported by the solver worker so far. Only
+  // meaningful while memoStatus === "computing".
+  solveProgressSize: number;
 }
 
 export function createAppState(memo: SolverMemo = createMemo()): AppState {
@@ -30,6 +33,7 @@ export function createAppState(memo: SolverMemo = createMemo()): AppState {
     hintsEnabled: false,
     memo,
     memoStatus: "uninit",
+    solveProgressSize: 0,
   };
 }
 
@@ -47,6 +51,14 @@ export function selectReserve(app: AppState, size: Size): void {
   } else {
     app.selectedReserveSize = size;
   }
+}
+
+// Forces the selection to a particular size (or clears it). Used by the drag
+// pipeline, which needs to commit a specific selection regardless of current
+// state — selectReserve's toggle behavior would deselect if the same size was
+// already up.
+export function setSelectedReserveSize(app: AppState, size: Size | null): void {
+  app.selectedReserveSize = size;
 }
 
 export function placeAt(app: AppState, row: Coord, col: Coord): void {
@@ -86,4 +98,8 @@ export function setHintsEnabled(app: AppState, enabled: boolean): void {
 
 export function setMemoStatus(app: AppState, status: MemoStatus): void {
   app.memoStatus = status;
+}
+
+export function setSolveProgress(app: AppState, size: number): void {
+  app.solveProgressSize = size;
 }
