@@ -96,10 +96,22 @@ console.log("\nPhase 2: micro-benchmark of hot helpers");
 const sampleKeys = Array.from(memo.keys()).slice(0, 100_000);
 console.log(`  canonicalKey samples: ${sampleKeys.length.toLocaleString()}`);
 
-// Reconstruct a state from each key and time canonicalKey on it.
-function stateFromKey(key: string) {
+// Reconstruct a state from a 40-bit canonical numeric key. The board portion
+// is the lex-smallest D4 transform — i.e. an arbitrary orientation — but the
+// resulting bytes form a valid GameState for benchmarking.
+function stateFromKey(key: number) {
   const data = new Uint8Array(16);
-  for (let i = 0; i < 16; i++) data[i] = key.charCodeAt(i);
+  data[15] = key & 1;
+  let reserves = (key >>> 1) & 0xfff;
+  for (let i = 14; i >= 9; i--) {
+    data[i] = reserves & 0b11;
+    reserves >>>= 2;
+  }
+  let board = Math.floor(key / 8192); // top 27 bits
+  for (let i = 8; i >= 0; i--) {
+    data[i] = board & 0b111;
+    board = Math.floor(board / 8);
+  }
   return { data };
 }
 
