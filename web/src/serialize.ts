@@ -50,16 +50,7 @@ export function serializeMemo(memo: SolverMemo): Uint8Array {
 }
 
 export function deserializeMemo(bytes: Uint8Array): Map<number, Outcome> {
-  const magic = String.fromCharCode(bytes[0]!, bytes[1]!, bytes[2]!, bytes[3]!);
-  if (magic !== MEMO_MAGIC) {
-    throw new Error(`bad magic: expected ${JSON.stringify(MEMO_MAGIC)}, got ${JSON.stringify(magic)}`);
-  }
-  const version = bytes[4];
-  if (version !== MEMO_VERSION) {
-    throw new Error(`unsupported memo version ${version}`);
-  }
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const count = view.getUint32(5, true);
+  const { count, view } = readHeader(bytes);
   const result = new Map<number, Outcome>();
   let offset = HEADER_BYTES;
   for (let i = 0; i < count; i++) {
@@ -70,4 +61,50 @@ export function deserializeMemo(bytes: Uint8Array): Map<number, Outcome> {
     offset += ENTRY_BYTES;
   }
   return result;
+}
+
+// Async chunked variant. Yields back to the event loop every `chunkSize`
+// entries so the UI can paint the progress bar / spinner / etc. between
+// chunks. `onProgress` is called with the running entry count after each
+// chunk and once at the end. `total` is reported alongside so the caller
+// can show a determinate bar from the very first tick.
+export async function deserializeMemoChunked(
+  bytes: Uint8Array,
+  onProgress: (current: number, total: number) => void,
+  chunkSize = 100_000,
+): Promise<Map<number, Outcome>> {
+  const { count, view } = readHeader(bytes);
+  onProgress(0, count);
+  const result = new Map<number, Outcome>();
+  let offset = HEADER_BYTES;
+  let i = 0;
+  while (i < count) {
+    const end = Math.min(i + chunkSize, count);
+    for (; i < end; i++) {
+      const lo = view.getUint32(offset, true);
+      const hi = view.getUint8(offset + 4);
+      const key = hi * 0x100000000 + lo;
+      result.set(key, byteToOutcome(bytes[offset + KEY_BYTES]!));
+      offset += ENTRY_BYTES;
+    }
+    onProgress(i, count);
+    // Yield to the event loop. setTimeout(_, 0) is enough to let the next
+    // paint happen on the main thread.
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  }
+  return result;
+}
+
+function readHeader(bytes: Uint8Array): { count: number; view: DataView } {
+  const magic = String.fromCharCode(bytes[0]!, bytes[1]!, bytes[2]!, bytes[3]!);
+  if (magic !== MEMO_MAGIC) {
+    throw new Error(`bad magic: expected ${JSON.stringify(MEMO_MAGIC)}, got ${JSON.stringify(magic)}`);
+  }
+  const version = bytes[4];
+  if (version !== MEMO_VERSION) {
+    throw new Error(`unsupported memo version ${version}`);
+  }
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const count = view.getUint32(5, true);
+  return { count, view };
 }
