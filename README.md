@@ -1,4 +1,4 @@
-# celestial-chess-solver
+# gobblet-solver
 
 A complete brute-force solver and a small static web UI for a Gobblet-Jr-style
 modification of tic-tac-toe.
