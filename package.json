@@ -1,7 +1,7 @@
 {
-  "name": "gobblet-solver",
+  "name": "celestial-chess-solver",
   "version": "0.0.0",
-  "description": "Simulator and solver for a modified tic-tac-toe (Gobblet-Jr-style) game.",
+  "description": "Solver and static web UI for a 3x3 Gobblet-Jr-like tic-tac-toe variant.",
   "private": true,
   "type": "module",
   "scripts": {
