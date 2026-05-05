@@ -56,6 +56,21 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
 }
 
 .reserves[data-active="false"] .reserve-piece { pointer-events: none; }
+
+.reserve-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.6rem;
+  height: 24px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #fff;
+  background: var(--p0);
+  user-select: none;
+}
+.reserves[data-player="1"] .reserve-label { background: var(--p1); }
 .reserves .reserve-piece {
   position: relative;
   width: 60px; height: 60px;

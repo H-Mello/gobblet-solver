@@ -71,7 +71,7 @@ function renderReserves(
   const active = currentPlayer(app) === player && gameStatus(state).kind === "ongoing";
   container.dataset["active"] = String(active);
   const sizes: Size[] = [1, 2, 3];
-  let html = "";
+  let html = `<span class="reserve-label">P${player}</span>`;
   for (const size of sizes) {
     const count = reserveOf(state, player, size);
     const enabled = active && count > 0;
