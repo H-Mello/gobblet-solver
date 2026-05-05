@@ -2,9 +2,10 @@ import type { Outcome, SolverMemo } from "../../src/index.js";
 
 export const MEMO_MAGIC = "CCS\0";
 // Bump on rule changes so cached results from older versions get rejected.
-// v1 = Rule B (strictly larger, opponent only).
-// v2 = strictly larger, any owner (current rule).
-export const MEMO_VERSION = 2;
+// v1 = strictly larger, opponent only; stuck → skip turn.
+// v2 = strictly larger, any owner; stuck → skip turn.
+// v3 = strictly larger, any owner; stuck → immediate draw (current rule).
+export const MEMO_VERSION = 3;
 
 const HEADER_BYTES = 4 + 1 + 4; // magic + version + count
 const KEY_BYTES = 16;

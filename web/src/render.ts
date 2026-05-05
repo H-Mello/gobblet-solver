@@ -10,7 +10,6 @@ import {
   gameStatus,
   reserveOf,
   solve,
-  turn,
 } from "../../src/index.js";
 import type { AppState } from "./app.js";
 import { currentPlayer, currentState } from "./app.js";
@@ -34,10 +33,9 @@ function renderStatus(state: GameState): void {
   if (status.kind === "win") {
     el.textContent = `P${status.player} wins!`;
   } else if (status.kind === "draw") {
-    el.textContent = "Draw — neither player can move.";
+    el.textContent = "Draw — no legal moves.";
   } else {
-    const must = status.toMove !== turn(state) ? " (forced skip)" : "";
-    el.textContent = `P${status.toMove} to move${must}.`;
+    el.textContent = `P${status.toMove} to move.`;
   }
 }
 

@@ -49,9 +49,9 @@ describe("solve", () => {
     expect(memo.get(canonicalKey(s))).toEqual({ winner: 0 });
   });
 
-  it("handles forced skip turns", () => {
-    // P0 to move, but P0 reserves are empty → P0 must skip.
-    // P1 has placed two smalls in row 0 and has one small left → after the skip P1 wins.
+  it("returns draw the moment the current player has no legal moves", () => {
+    // P0 to move, but P0 reserves are empty → game ends as a draw immediately
+    // (the rule does not let P1 play out a forced skip-turn win).
     const s = initialState();
     setCell(s, 0, 0, encodePiece(1, 1));
     setCell(s, 0, 1, encodePiece(1, 1));
@@ -60,7 +60,7 @@ describe("solve", () => {
     setReserve(s, 0, 2, 0);
     setReserve(s, 0, 3, 0);
     setTurn(s, 0);
-    expect(solve(s)).toEqual({ winner: 1 });
+    expect(solve(s)).toEqual({ winner: "draw" });
   });
 });
 
@@ -91,7 +91,7 @@ describe("bestPlay", () => {
     });
   });
 
-  it("returns no moves when the player must skip, with the skipped-state outcome", () => {
+  it("returns draw with no moves when the current player has no legal moves", () => {
     const s = initialState();
     setCell(s, 0, 0, encodePiece(1, 1));
     setCell(s, 0, 1, encodePiece(1, 1));
@@ -101,7 +101,7 @@ describe("bestPlay", () => {
     setReserve(s, 0, 3, 0);
     setTurn(s, 0);
     const result = bestPlay(s);
-    expect(result.outcome).toEqual({ winner: 1 });
+    expect(result.outcome).toEqual({ winner: "draw" });
     expect(result.moves).toEqual([]);
     expect(result.stats).toEqual({ p0Wins: 0, p1Wins: 0, draws: 0 });
   });
@@ -110,7 +110,7 @@ describe("bestPlay", () => {
     // P0 to move. Reserves: P0 has only 1 small left; P1 has nothing.
     // (0,0) and (0,1) are P0 smalls — 7 empty cells.
     // Placing at (0,2) wins for P0. Other 6 placements drain P0's last piece;
-    // P1 then has no moves (skip), P0 also has no moves → draw on each.
+    // P1 then has no moves → game ends as a draw immediately.
     const s = initialState();
     for (const p of [0, 1] as const) {
       setReserve(s, p, 1, 0);

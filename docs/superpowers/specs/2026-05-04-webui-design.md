@@ -12,7 +12,7 @@ We have a working solver library in `src/` that fully solves the modified-tic-ta
 - Cover rule: a piece may be placed on a non-empty cell **iff its size is strictly larger** than the existing top piece. The covered piece's owner doesn't matter — own pieces and opponent pieces are both coverable.
 - Same-size and smaller pieces cannot cover.
 - Win: three squares in a line (row / column / diagonal) whose top pieces all belong to you.
-- A player with no legal placement skips. Both players stuck consecutively → draw.
+- The moment the side-to-move has no legal placement, the game ends in a **draw**. (No skip-turn mechanic.)
 
 The goal is a small, static web app that lets a person play out positions on a 3×3 board, with optional solver-driven hints showing the outcome under perfect play and color-coded legality of every legal move. The app must be deployable as a static page (no server) and should not pay the full 8-second solve cost more than once per browser profile.
 

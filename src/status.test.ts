@@ -21,24 +21,14 @@ describe("gameStatus", () => {
     expect(gameStatus(s)).toEqual({ kind: "win", player: 0 });
   });
 
-  it("flips toMove when the current player has no legal moves but the opponent does", () => {
+  it("reports draw when the current player has no legal moves", () => {
+    // Drain P0's reserves entirely. Whether or not P1 has moves, the game ends
+    // immediately as a draw under the current rule.
     const s = initialState();
-    // Drain P0's reserves entirely; P0 has no moves, P1 still does.
     setReserve(s, 0, 1, 0);
     setReserve(s, 0, 2, 0);
     setReserve(s, 0, 3, 0);
     setTurn(s, 0);
-    expect(gameStatus(s)).toEqual({ kind: "ongoing", toMove: 1 });
-  });
-
-  it("reports draw when both players are stuck and no winner exists", () => {
-    const s = initialState();
-    setReserve(s, 0, 1, 0);
-    setReserve(s, 0, 2, 0);
-    setReserve(s, 0, 3, 0);
-    setReserve(s, 1, 1, 0);
-    setReserve(s, 1, 2, 0);
-    setReserve(s, 1, 3, 0);
     expect(gameStatus(s)).toEqual({ kind: "draw" });
   });
 

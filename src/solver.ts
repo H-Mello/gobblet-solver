@@ -1,11 +1,4 @@
-import {
-  type GameState,
-  type Player,
-  cloneState,
-  opp,
-  setTurn,
-  turn,
-} from "./state.js";
+import { type GameState, type Player, opp, turn } from "./state.js";
 import { winner } from "./legality.js";
 import { type Move, applyMove, legalMoves } from "./moves.js";
 import { canonicalKey } from "./symmetry.js";
@@ -99,13 +92,7 @@ function compute(state: GameState, memo: SolverMemo): Outcome {
 
   const player = turn(state);
   const moves = legalMoves(state);
-
-  if (moves.length === 0) {
-    const skipped = cloneState(state);
-    setTurn(skipped, opp(player));
-    if (legalMoves(skipped).length === 0) return { winner: "draw" };
-    return solve(skipped, memo);
-  }
+  if (moves.length === 0) return { winner: "draw" };
 
   let best: Outcome = { winner: opp(player) };
   let bestScore = -1;
@@ -133,14 +120,8 @@ export function bestPlay(state: GameState, memo: SolverMemo = createMemo()): Bes
 
   const player = turn(state);
   const candidates = legalMoves(state);
-
   if (candidates.length === 0) {
-    const skipped = cloneState(state);
-    setTurn(skipped, opp(player));
-    if (legalMoves(skipped).length === 0) {
-      return { outcome: { winner: "draw" }, moves: [], stats: emptyStats() };
-    }
-    return { outcome: solve(skipped, memo), moves: [], stats: emptyStats() };
+    return { outcome: { winner: "draw" }, moves: [], stats: emptyStats() };
   }
 
   let best: Outcome = { winner: opp(player) };
