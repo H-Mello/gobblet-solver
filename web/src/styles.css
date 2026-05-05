@@ -130,6 +130,24 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
 .cell.tint-lose { background: var(--tint-lose); }
 .cell svg.piece { width: 92%; height: 92%; }
 
+.cell-stats {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 1px 4px;
+  border-radius: 3px;
+  pointer-events: none;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+}
+.cell-stats .cs-w { color: #1a7a30; }
+.cell-stats .cs-d { color: #8a6a00; }
+.cell-stats .cs-l { color: #a02828; }
+
 .controls { display: flex; gap: 0.5rem; }
 .controls button {
   padding: 0.4rem 0.8rem;

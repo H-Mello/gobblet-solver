@@ -59,7 +59,8 @@ function renderHintPanel(app: AppState, state: GameState): void {
   const tally = total === 0
     ? "(no moves available — terminal or forced skip)"
     : `From here: ${p0Wins} P0-win / ${p1Wins} P1-win / ${draws} draw across ${total} legal moves.`;
-  el.textContent = `${outcomeText}. ${tally}`;
+  const legend = " Cell counts: wins · draws · losses (your perspective).";
+  el.textContent = `${outcomeText}. ${tally}${legend}`;
 }
 
 function renderReserves(
@@ -124,9 +125,12 @@ function renderBoard(app: AppState, state: GameState): void {
     for (let c = 0 as Coord; c < 3; c = (c + 1) as Coord) {
       const v = cellAt(state, r as Coord, c as Coord);
       const inner = v === 0 ? "" : pieceSVGFromCell(v);
-      const tint = computeTint(app, state, player, r as Coord, c as Coord, ongoing);
-      const cls = tint ? `cell tint-${tint}` : "cell";
-      html += `<div class="${cls}" data-row="${r}" data-col="${c}">${inner}</div>`;
+      const hint = computeCellHint(app, state, player, r as Coord, c as Coord, ongoing);
+      const cls = hint ? `cell tint-${hint.tint}` : "cell";
+      const statsHtml = hint?.counts
+        ? `<div class="cell-stats"><span class="cs-w">${hint.counts.wins}</span>·<span class="cs-d">${hint.counts.draws}</span>·<span class="cs-l">${hint.counts.losses}</span></div>`
+        : "";
+      html += `<div class="${cls}" data-row="${r}" data-col="${c}">${inner}${statsHtml}</div>`;
     }
   }
   board.innerHTML = html;
@@ -139,22 +143,39 @@ function pieceSVGFromCell(v: number): string {
   return pieceSVG(owner, size);
 }
 
-function computeTint(
+interface CellHint {
+  tint: "win" | "draw" | "lose";
+  // Tally over the OPPONENT's legal responses to this placement, expressed in
+  // the placing player's frame. Null when the placement is terminal (no
+  // responses) — the tint alone tells the story there.
+  counts: { wins: number; draws: number; losses: number } | null;
+}
+
+function computeCellHint(
   app: AppState,
   state: GameState,
   player: Player,
   r: Coord,
   c: Coord,
   ongoing: boolean,
-): "win" | "draw" | "lose" | null {
+): CellHint | null {
   if (!app.hintsEnabled || app.memoStatus !== "ready") return null;
   if (!ongoing) return null;
   if (app.selectedReserveSize === null) return null;
   if (!canPlace(state, player, app.selectedReserveSize, r, c)) return null;
   const child = applyMove(state, { size: app.selectedReserveSize, row: r, col: c });
-  const outcome = solve(child, app.memo);
-  if (outcome.winner === "draw") return "draw";
-  return outcome.winner === player ? "win" : "lose";
+  const bp = bestPlay(child, app.memo);
+  const tint: "win" | "draw" | "lose" =
+    bp.outcome.winner === "draw" ? "draw" : bp.outcome.winner === player ? "win" : "lose";
+  const total = bp.stats.p0Wins + bp.stats.p1Wins + bp.stats.draws;
+  const counts = total === 0
+    ? null
+    : {
+        wins: player === 0 ? bp.stats.p0Wins : bp.stats.p1Wins,
+        losses: player === 0 ? bp.stats.p1Wins : bp.stats.p0Wins,
+        draws: bp.stats.draws,
+      };
+  return { tint, counts };
 }
 
 function renderHistory(app: AppState): void {
